@@ -23,3 +23,24 @@ TEST_CASE("Shader vector initialization", "[shader]")
 
     REQUIRE(result);
 }
+
+TEST_CASE("Current vector initialization", "[shader]")
+{
+    stf::AssertionsV1::ShaderTestFixture fixture(
+        stf::AssertionsV1::ShaderTestFixture::FixtureDesc{
+            .Mappings{
+                { "/Tests", std::filesystem::current_path() / "Shader" }
+            }
+        });
+
+    const auto result = fixture.RunTest(
+        stf::AssertionsV1::ShaderTestFixture::RuntimeTestDesc{
+            .CompilationEnv{
+                .Source = std::filesystem::path{ "/Tests/CurrentVectorInit.hlsl" }
+            },
+            .TestName = "CurrentVectorInit",
+            .ThreadGroupCount{ 1, 1, 1 }
+        });
+
+    REQUIRE(result);
+}
