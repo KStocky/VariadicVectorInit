@@ -1,12 +1,25 @@
 #include "/Test/STF/ShaderTestFramework.hlsli"
 
-namespace init
-{
-    float4 vec()
-    {
-        return (float4)0;
-    }
-}
+template<typename... ArgTypes>
+struct all_same_type;
+
+template<typename FirstType>
+struct all_same_type<FirstType> : ttl::true_type {};
+
+template<typename FirstType, typename SecondType, typename... OtherTypes>
+struct all_same_type<FirstType, SecondType, OtherTypes...> : ttl::false_type {};
+
+template<typename FirstType, typename... OtherTypes>
+struct all_same_type<FirstType, FirstType, OtherTypes...> : all_same_type<FirstType, OtherTypes...> {};
+
+template<typename... ArgTypes>
+static const bool all_same_type_v = all_same_type<ArgTypes...>::value;
+
+static_assert(all_same_type_v<int>, "Expected all_same_type_v<int, int, int> to be true");
+static_assert(all_same_type_v<int, int>, "Expected all_same_type_v<int, int, int> to be true");
+static_assert(all_same_type_v<int, int, int>, "Expected all_same_type_v<int, int, int> to be true");
+static_assert(!all_same_type_v<int, float, int>, "Expected all_same_type_v<int, float, int> to be false");
+static_assert(!all_same_type_v<int, int, int, int, float>, "Expected all_same_type_v<int, float, int> to be false");
 
 [numthreads(1, 1, 1)]
 void VectorInit()
