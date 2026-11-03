@@ -1,0 +1,36 @@
+name: Build and test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-and-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: MSVC and Clang-CL
+    runs-on: windows-2025-vs2026
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up x64 MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # Both presets share the source-built DXC; do not run them concurrently.
+      - name: Build and test with MSVC
+        run: cmake --workflow --preset msvc-debug
+
+      - name: Build and test with Clang-CL
+        if: ${{ !cancelled() }}
+        run: cmake --workflow --preset clang-cl-debug

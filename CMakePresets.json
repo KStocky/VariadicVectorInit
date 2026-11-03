@@ -1,0 +1,83 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 30, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "windows-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "architecture": { "value": "x64", "strategy": "external" },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_LINKER_TYPE": "MSVC",
+        "BUILD_TESTING": true
+      },
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "hostOS": [ "Windows" ]
+        }
+      }
+    },
+    {
+      "name": "msvc-debug",
+      "displayName": "MSVC x64 Debug",
+      "inherits": "windows-base",
+      "cacheVariables": { "CMAKE_CXX_COMPILER": "cl" },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "windows-msvc-x64"
+        }
+      }
+    },
+    {
+      "name": "clang-cl-debug",
+      "displayName": "Clang-CL x64 Debug",
+      "inherits": "windows-base",
+      "cacheVariables": { "CMAKE_CXX_COMPILER": "clang-cl" },
+      "environment": { "PATH": "$env{ProgramFiles}/LLVM/bin;$penv{PATH}" },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "windows-clangcl-x64"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "msvc-debug", "configurePreset": "msvc-debug", "jobs": 12 },
+    { "name": "clang-cl-debug", "configurePreset": "clang-cl-debug", "jobs": 12 }
+  ],
+  "testPresets": [
+    {
+      "name": "msvc-debug",
+      "configurePreset": "msvc-debug",
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error" }
+    },
+    {
+      "name": "clang-cl-debug",
+      "configurePreset": "clang-cl-debug",
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error" }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "msvc-debug",
+      "steps": [
+        { "type": "configure", "name": "msvc-debug" },
+        { "type": "build", "name": "msvc-debug" },
+        { "type": "test", "name": "msvc-debug" }
+      ]
+    },
+    {
+      "name": "clang-cl-debug",
+      "steps": [
+        { "type": "configure", "name": "clang-cl-debug" },
+        { "type": "build", "name": "clang-cl-debug" },
+        { "type": "test", "name": "clang-cl-debug" }
+      ]
+    }
+  ]
+}

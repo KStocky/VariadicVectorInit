@@ -1,0 +1,21 @@
+diff --git a/src/Shader/STF/AssertionsV1/FrameworkResources.hlsli b/src/Shader/STF/AssertionsV1/FrameworkResources.hlsli
+--- a/src/Shader/STF/AssertionsV1/FrameworkResources.hlsli
++++ b/src/Shader/STF/AssertionsV1/FrameworkResources.hlsli
+@@ -21,1 +21,1 @@
+-                uint BeginMeta()
++                uint BeginMeta() const
+@@ -26,1 +26,1 @@
+-                uint Num()
++                uint Num() const
+@@ -31,1 +31,1 @@
+-                uint SizeInBytesOfMeta()
++                uint SizeInBytesOfMeta() const
+@@ -36,1 +36,1 @@
+-                uint BeginData()
++                uint BeginData() const
+@@ -41,1 +41,1 @@
+-                uint SizeInBytesOfData()
++                uint SizeInBytesOfData() const
+@@ -46,1 +46,1 @@
+-                uint SizeInBytesOfSection()
++                uint SizeInBytesOfSection() const
