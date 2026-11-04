@@ -47,6 +47,17 @@ static_assert(total_fundamental_scalars_v<> == 0, "Expected total_fundamental_sc
 static_assert(total_fundamental_scalars_v<Empty> == 0, "Expected total_fundamental_scalars_v<Empty> to be 0");
 static_assert(total_fundamental_scalars_v<int16_t2> == 2, "Expected total_fundamental_scalars_v<int16_t2> to be 2");
 
+template<typename FirstType, typename... OtherTypes>
+ttl::enable_if_t<
+    all_same_fundamental_base_type_v<FirstType, OtherTypes...>,
+    vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>
+> vec(FirstType InFirst, OtherTypes... InOthers)
+{
+    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>)0;
+    // Magic
+    return ret;
+}
+
 
 [numthreads(1, 1, 1)]
 void VectorInit()
