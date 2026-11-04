@@ -58,6 +58,49 @@ ttl::enable_if_t<
     return ret;
 }
 
+template<typename DestType, typename SourceType>
+ttl::enable_if_t<
+    (ttl::fundamental_type_traits<SourceType>::dim0 >  1)
+> CopyToVector(inout DestType InOutVec, SourceType InSource, uint InStartIndex)
+{
+    for (uint i = 0; i < ttl::fundamental_type_traits<SourceType>::dim0; ++i)
+    {
+        InOutVec[InStartIndex + i] = InSource[i];
+    }
+}
+
+template<typename DestType, typename SourceType>
+ttl::enable_if_t<
+    (ttl::fundamental_type_traits<SourceType>::dim0 ==  1)
+> CopyToVector(inout DestType InOutVec, SourceType InSource, uint InStartIndex)
+{
+    InOutVec[InStartIndex] = InSource;
+}
+
+template<typename DestType, typename... SourceTypes>
+void Cat(inout DestType InOutVec, uint InStartIndex)
+{
+
+}
+
+template<typename DestType, typename SourceType, typename... OtherSourceTypes>
+void Cat(inout DestType InOutVec, uint InStartIndex, SourceType InSource, OtherSourceTypes... InOtherSources)
+{
+    CopyToVector(InOutVec, InSource, InStartIndex);
+    Cat(InOutVec, InStartIndex + ttl::fundamental_type_traits<SourceType>::dim0, InOtherSources...);
+}
+
+template<typename FirstType, typename... OtherTypes>
+auto vec2(FirstType InFirst, OtherTypes... InOthers)
+{
+    static_assert(all_same_fundamental_base_type_v<FirstType, OtherTypes...>, "All types must have the same fundamental base type");
+    static const uint totalScalars = total_fundamental_scalars_v<FirstType, OtherTypes...>;
+    static_assert(totalScalars <= 4, "The total number of scalars must be less than or equal to 4");
+    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>)0;
+    Cat(ret, 0, InFirst, InOthers...);
+    return ret;
+}
+
 
 [numthreads(1, 1, 1)]
 void VectorInit()
@@ -66,4 +109,7 @@ void VectorInit()
     ASSERT(AreEqual, value.x, 1u);
     ASSERT(AreEqual, value.y, 2u);
     ASSERT(AreEqual, value.z, 3u);
+
+    float3 a = vec2(1.0, 2.0, 3.0);
+    ASSERT(AreEqual, a, float3(1.0, 2.0, 3.0));
 }
