@@ -15,7 +15,8 @@ TEST_CASE("Shader vector initialization", "[shader]")
     const auto result = fixture.RunTest(
         stf::AssertionsV1::ShaderTestFixture::RuntimeTestDesc{
             .CompilationEnv{
-                .Source = std::filesystem::path{"/Tests/VectorInit.hlsl"}
+                .Source = std::filesystem::path{"/Tests/VectorInit.hlsl"},
+                .CompilationFlags{L"-Wno-hlsl-fold-expressions"}
             },
             .TestName = "VectorInit",
             .ThreadGroupCount{1, 1, 1}
