@@ -156,6 +156,12 @@ static_assert(ttl::models<CVectorInitableV1, float3, float, float, float>::value
 static_assert(ttl::models<CVectorInitableV2, float3, float, float, float>::value);
 static_assert(ttl::models<CVectorInitableV3, float3, float, float, float>::value);
 
+//This is a compiler error
+//static_assert(!ttl::models<CVectorInitableV1, float3, float, int, float>::value);
+
+static_assert(!ttl::models<CVectorInitableV2, float3, float, int, float>::value);
+static_assert(!ttl::models<CVectorInitableV3, float3, float, int, float>::value);
+
 
 [numthreads(1, 1, 1)]
 void VectorInit()
