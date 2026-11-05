@@ -77,6 +77,28 @@ ttl::enable_if_t<
     InOutVec[InStartIndex] = InSource;
 }
 
+template<typename DestType, typename SourceType>
+ttl::enable_if_t<
+    (ttl::fundamental_type_traits<SourceType>::dim0 >  1)
+> CopyToVector2(inout DestType InOutVec, SourceType InSource, inout uint InOutStartIndex)
+{
+    const uint numIndices = ttl::fundamental_type_traits<SourceType>::dim0;
+    for (uint i = 0; i < ttl::fundamental_type_traits<SourceType>::dim0; ++i)
+    {
+        InOutVec[InOutStartIndex + i] = InSource[i];
+    }
+    InOutStartIndex += numIndices;
+}
+
+template<typename DestType, typename SourceType>
+ttl::enable_if_t<
+    (ttl::fundamental_type_traits<SourceType>::dim0 ==  1)
+> CopyToVector2(inout DestType InOutVec, SourceType InSource, inout uint InOutStartIndex)
+{
+    InOutVec[InOutStartIndex] = InSource;
+    ++InOutStartIndex;
+}
+
 template<typename DestType, typename... SourceTypes>
 void Cat(inout DestType InOutVec, uint InStartIndex)
 {
@@ -96,8 +118,23 @@ auto vec2(FirstType InFirst, OtherTypes... InOthers)
     static_assert(all_same_fundamental_base_type_v<FirstType, OtherTypes...>, "All types must have the same fundamental base type");
     static const uint totalScalars = total_fundamental_scalars_v<FirstType, OtherTypes...>;
     static_assert(totalScalars <= 4, "The total number of scalars must be less than or equal to 4");
-    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>)0;
+    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, totalScalars>)0;
     Cat(ret, 0, InFirst, InOthers...);
+    return ret;
+}
+
+template<typename FirstType, typename... OtherTypes>
+auto vec3(FirstType InFirst, OtherTypes... InOthers)
+{
+    static_assert(all_same_fundamental_base_type_v<FirstType, OtherTypes...>, "All types must have the same fundamental base type");
+    static const uint totalScalars = total_fundamental_scalars_v<FirstType, OtherTypes...>;
+    static_assert(totalScalars <= 4, "The total number of scalars must be less than or equal to 4");
+    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, totalScalars>)0;
+    
+    uint startIndex = 0;
+    CopyToVector2(ret, InFirst, startIndex);
+    (CopyToVector2(ret, InOthers, startIndex), ...);
+
     return ret;
 }
 
@@ -110,6 +147,6 @@ void VectorInit()
     ASSERT(AreEqual, value.y, 2u);
     ASSERT(AreEqual, value.z, 3u);
 
-    float3 a = vec2(1.0, 2.0, 3.0);
+    float3 a = vec3(1.0, 2.0, 3.0);
     ASSERT(AreEqual, a, float3(1.0, 2.0, 3.0));
 }
