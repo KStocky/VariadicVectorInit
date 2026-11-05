@@ -6,7 +6,7 @@
   "hlsl.targetProfile": "lib_6_6",
   "hlsl.virtualDirectoryMappings": {
     "/Tests": "shader",
-    "/Test": "dependencies\\stf\\src\\Shader"
+    "/Test": "dependencies\\stf-src\\src\\Shader"
   },
   "hlsl.preprocessorDefinitions": {
     "STF_ASSERTION_LIBRARY": "\"/Test/STF/AssertionsV1/Framework.hlsli\"",

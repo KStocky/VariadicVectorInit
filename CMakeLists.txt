@@ -20,17 +20,21 @@ find_program(MSVC_LIB_EXECUTABLE NAMES lib.exe REQUIRED)
 set(CMAKE_AR "${MSVC_LIB_EXECUTABLE}")
 
 include(CTest)
+set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dependencies")
+include(FetchContent)
 include(cmake/SourceDXC.cmake)
 
-checkout_dependency(
+FetchContent_Declare(
     catch2
-    https://github.com/catchorg/Catch2.git
-    v3.11.0
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.11.0
+    BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/catch2-build"
 )
-checkout_dependency(
+FetchContent_Declare(
     stf
-    https://github.com/KStocky/ShaderTestFramework.git
-    d176dbb5892c894fd784202165d7b82f6f48ce40
+    GIT_REPOSITORY https://github.com/KStocky/ShaderTestFramework.git
+    GIT_TAG d176dbb5892c894fd784202165d7b82f6f48ce40
+    BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/_deps/stf-build"
 )
 set(CATCH_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(CATCH_INSTALL_DOCS OFF CACHE BOOL "" FORCE)
@@ -38,7 +42,7 @@ set(CATCH_INSTALL_EXTRAS OFF CACHE BOOL "" FORCE)
 set(STF_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
 set(STF_INCLUDE_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(STF_DISABLE_UNITY_STF ON CACHE BOOL "" FORCE)
-add_subdirectory("${catch2_SOURCE_DIR}" "${catch2_BINARY_DIR}")
+FetchContent_MakeAvailable(stf)
 
 set(stf_patch "${CMAKE_CURRENT_SOURCE_DIR}/cmake/stf-hlsl-const.patch")
 execute_process(
@@ -54,22 +58,7 @@ if(NOT stf_patch_applied EQUAL 0)
 endif()
 
 list(PREPEND CMAKE_MODULE_PATH "${stf_SOURCE_DIR}/cmake")
-include(NugetPackages)
-
-# Load STF's other NuGet helpers, but replace its packaged DXC before adding STF.
-function(nuget_get_dxc IN_TARGET OUT_SUCCEEDED OUT_INCLUDE_PATH OUT_BINARY_PATH OUT_LIB_PATH)
-    set(${OUT_SUCCEEDED} TRUE PARENT_SCOPE)
-    set(${OUT_INCLUDE_PATH} "${dxc_SOURCE_DIR}/include/dxc" PARENT_SCOPE)
-    set(${OUT_BINARY_PATH} "${SOURCE_DXC_RUNTIME_DIR}" PARENT_SCOPE)
-    set(${OUT_LIB_PATH} "${SOURCE_DXC_BUILD_DIR}/lib" PARENT_SCOPE)
-endfunction()
-
-add_subdirectory("${stf_SOURCE_DIR}" "${stf_BINARY_DIR}")
 add_dependencies(ShaderTestFramework source-dxc)
-set_target_properties(ShaderTestFramework Catch2 Catch2WithMain PROPERTIES
-    FOLDER Dependencies
-    UNITY_BUILD OFF
-)
 
 add_executable(variadic-vector-init-tests
     test/ShaderTests.cpp
@@ -86,16 +75,13 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES
 )
 
 include(AssetDependencyManagement)
+include(STF)
 asset_dependency_init(variadic-vector-init-tests)
 target_add_asset_directory(variadic-vector-init-tests "${CMAKE_CURRENT_SOURCE_DIR}/shader" "/Shader")
-target_compile_definitions(variadic-vector-init-tests PRIVATE USE_PIX)
-target_link_libraries(variadic-vector-init-tests PRIVATE ShaderTestFramework Catch2::Catch2WithMain)
-copy_all_dependent_assets(variadic-vector-init-tests)
-list(APPEND CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/extras")
-include(Catch)
-catch_discover_tests(variadic-vector-init-tests
-    WORKING_DIRECTORY "$<TARGET_FILE_DIR:variadic-vector-init-tests>"
-    DISCOVERY_MODE PRE_TEST
+add_stf_with_catch2(variadic-vector-init-tests)
+set_target_properties(ShaderTestFramework Catch2 Catch2WithMain PROPERTIES
+    FOLDER Dependencies
+    UNITY_BUILD OFF
 )
 
 # The copy targets must wait for DXC, even when Ninja schedules them in parallel.
