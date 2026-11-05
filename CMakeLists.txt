@@ -30,7 +30,7 @@ checkout_dependency(
 checkout_dependency(
     stf
     https://github.com/KStocky/ShaderTestFramework.git
-    06ae57f02c5cb9f5d9db2b334978ceeb1078fdf1
+    d176dbb5892c894fd784202165d7b82f6f48ce40
 )
 set(CATCH_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(CATCH_INSTALL_DOCS OFF CACHE BOOL "" FORCE)

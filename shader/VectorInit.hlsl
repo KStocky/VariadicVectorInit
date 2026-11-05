@@ -1,4 +1,5 @@
 #include "/Test/STF/ShaderTestFramework.hlsli"
+#include "/Test/TTL/models.hlsli"
 
 template<typename... InArgTypes>
 struct conjunction : ttl::true_type {};
@@ -118,6 +119,25 @@ auto vec3(FirstType InFirst, OtherTypes... InOthers)
 
     return ret;
 }
+
+struct CVectorInitable
+{
+    template<typename ExpectedVecType, typename... InArgTypes>
+    __decltype(
+        ttl::models_if_same<ExpectedVecType, __decltype(vec(ttl::declval<InArgTypes>()...))>()
+    ) requires();
+};
+
+struct CVector2Initable
+{
+    template<typename ExpectedVecType, typename... InArgTypes>
+    __decltype(
+        ttl::models_if_same<ExpectedVecType, __decltype(vec2(ttl::declval<InArgTypes>()...))>()
+    ) requires();
+};
+
+static_assert(ttl::models<CVectorInitable, float3, float, float, float>::value);
+static_assert(ttl::models<CVector2Initable, float3, float, float, float>::value);
 
 
 [numthreads(1, 1, 1)]
