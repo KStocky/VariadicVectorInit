@@ -83,61 +83,78 @@ void Cat(inout DestType InOutVec, uint InStartIndex, SourceType InSource, OtherS
     Cat(InOutVec, InStartIndex, InOtherSources...);
 }
 
-template<typename FirstType, typename... OtherTypes>
-ttl::enable_if_t<
-    all_same_fundamental_base_type_v<FirstType, OtherTypes...>,
-    vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>
-> vec(FirstType InFirst, OtherTypes... InOthers)
+namespace v1
 {
-    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>)0;
-    Cat(ret, 0, InFirst, InOthers...);
-    return ret;
+    template<typename FirstType, typename... OtherTypes>
+    auto vec(FirstType InFirst, OtherTypes... InOthers)
+    {
+        static_assert(all_same_fundamental_base_type_v<FirstType, OtherTypes...>, "All types must have the same fundamental base type");
+        static const uint totalScalars = total_fundamental_scalars_v<FirstType, OtherTypes...>;
+        static_assert(totalScalars <= 4, "The total number of scalars must be less than or equal to 4");
+
+        auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, totalScalars>)0;
+        Cat(ret, 0, InFirst, InOthers...);
+        return ret;
+    }
 }
 
-template<typename FirstType, typename... OtherTypes>
-auto vec2(FirstType InFirst, OtherTypes... InOthers)
+namespace v2
 {
-    static_assert(all_same_fundamental_base_type_v<FirstType, OtherTypes...>, "All types must have the same fundamental base type");
-    static const uint totalScalars = total_fundamental_scalars_v<FirstType, OtherTypes...>;
-    static_assert(totalScalars <= 4, "The total number of scalars must be less than or equal to 4");
-    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, totalScalars>)0;
-    Cat(ret, 0, InFirst, InOthers...);
-    return ret;
+    template<typename FirstType, typename... OtherTypes>
+    ttl::enable_if_t<
+        all_same_fundamental_base_type_v<FirstType, OtherTypes...>,
+        vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>
+    > vec(FirstType InFirst, OtherTypes... InOthers)
+    {
+        auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>)0;
+        Cat(ret, 0, InFirst, InOthers...);
+        return ret;
+    }
 }
 
-template<typename FirstType, typename... OtherTypes>
-auto vec3(FirstType InFirst, OtherTypes... InOthers)
+namespace v3
 {
-    static_assert(all_same_fundamental_base_type_v<FirstType, OtherTypes...>, "All types must have the same fundamental base type");
-    static const uint totalScalars = total_fundamental_scalars_v<FirstType, OtherTypes...>;
-    static_assert(totalScalars <= 4, "The total number of scalars must be less than or equal to 4");
-    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, totalScalars>)0;
-    
-    uint startIndex = 0;
-    CopyToVector(ret, InFirst, startIndex);
-    (CopyToVector(ret, InOthers, startIndex), ...);
-
-    return ret;
+    template<typename FirstType, typename... OtherTypes>
+    ttl::enable_if_t<
+        all_same_fundamental_base_type_v<FirstType, OtherTypes...>,
+        vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>
+    > vec(FirstType InFirst, OtherTypes... InOthers)
+    {
+        auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>)0;
+        uint startIndex = 0;
+        CopyToVector(ret, InFirst, startIndex);
+        (CopyToVector(ret, InOthers, startIndex), ...);
+        return ret;
+    }
 }
 
-struct CVectorInitable
+struct CVectorInitableV1
 {
     template<typename ExpectedVecType, typename... InArgTypes>
     __decltype(
-        ttl::models_if_same<ExpectedVecType, __decltype(vec(ttl::declval<InArgTypes>()...))>()
+        ttl::models_if_same<ExpectedVecType, __decltype(v1::vec(ttl::declval<InArgTypes>()...))>()
     ) requires();
 };
 
-struct CVector2Initable
+struct CVectorInitableV2
 {
     template<typename ExpectedVecType, typename... InArgTypes>
     __decltype(
-        ttl::models_if_same<ExpectedVecType, __decltype(vec2(ttl::declval<InArgTypes>()...))>()
+        ttl::models_if_same<ExpectedVecType, __decltype(v2::vec(ttl::declval<InArgTypes>()...))>()
     ) requires();
 };
 
-static_assert(ttl::models<CVectorInitable, float3, float, float, float>::value);
-static_assert(ttl::models<CVector2Initable, float3, float, float, float>::value);
+struct CVectorInitableV3
+{
+    template<typename ExpectedVecType, typename... InArgTypes>
+    __decltype(
+        ttl::models_if_same<ExpectedVecType, __decltype(v3::vec(ttl::declval<InArgTypes>()...))>()
+    ) requires();
+};
+
+static_assert(ttl::models<CVectorInitableV1, float3, float, float, float>::value);
+static_assert(ttl::models<CVectorInitableV2, float3, float, float, float>::value);
+static_assert(ttl::models<CVectorInitableV3, float3, float, float, float>::value);
 
 
 [numthreads(1, 1, 1)]
@@ -148,12 +165,12 @@ void VectorInit()
     ASSERT(AreEqual, value.y, 2u);
     ASSERT(AreEqual, value.z, 3u);
 
-    float3 a = vec(1.0, 2.0, 3.0);
+    float3 a = v1::vec(1.0, 2.0, 3.0);
     ASSERT(AreEqual, a, float3(1.0, 2.0, 3.0));
 
-    float3 b = vec2(1.0, 2.0, 3.0);
+    float3 b = v2::vec(1.0, 2.0, 3.0);
     ASSERT(AreEqual, b, float3(1.0, 2.0, 3.0));
 
-    float3 c = vec3(1.0, 2.0, 3.0);
+    float3 c = v3::vec(1.0, 2.0, 3.0);
     ASSERT(AreEqual, c, float3(1.0, 2.0, 3.0));
 }
