@@ -47,40 +47,10 @@ static_assert(total_fundamental_scalars_v<> == 0, "Expected total_fundamental_sc
 static_assert(total_fundamental_scalars_v<Empty> == 0, "Expected total_fundamental_scalars_v<Empty> to be 0");
 static_assert(total_fundamental_scalars_v<int16_t2> == 2, "Expected total_fundamental_scalars_v<int16_t2> to be 2");
 
-template<typename FirstType, typename... OtherTypes>
-ttl::enable_if_t<
-    all_same_fundamental_base_type_v<FirstType, OtherTypes...>,
-    vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>
-> vec(FirstType InFirst, OtherTypes... InOthers)
-{
-    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>)0;
-    // Magic
-    return ret;
-}
-
 template<typename DestType, typename SourceType>
 ttl::enable_if_t<
     (ttl::fundamental_type_traits<SourceType>::dim0 >  1)
-> CopyToVector(inout DestType InOutVec, SourceType InSource, uint InStartIndex)
-{
-    for (uint i = 0; i < ttl::fundamental_type_traits<SourceType>::dim0; ++i)
-    {
-        InOutVec[InStartIndex + i] = InSource[i];
-    }
-}
-
-template<typename DestType, typename SourceType>
-ttl::enable_if_t<
-    (ttl::fundamental_type_traits<SourceType>::dim0 ==  1)
-> CopyToVector(inout DestType InOutVec, SourceType InSource, uint InStartIndex)
-{
-    InOutVec[InStartIndex] = InSource;
-}
-
-template<typename DestType, typename SourceType>
-ttl::enable_if_t<
-    (ttl::fundamental_type_traits<SourceType>::dim0 >  1)
-> CopyToVector2(inout DestType InOutVec, SourceType InSource, inout uint InOutStartIndex)
+> CopyToVector(inout DestType InOutVec, SourceType InSource, inout uint InOutStartIndex)
 {
     const uint numIndices = ttl::fundamental_type_traits<SourceType>::dim0;
     for (uint i = 0; i < ttl::fundamental_type_traits<SourceType>::dim0; ++i)
@@ -93,7 +63,7 @@ ttl::enable_if_t<
 template<typename DestType, typename SourceType>
 ttl::enable_if_t<
     (ttl::fundamental_type_traits<SourceType>::dim0 ==  1)
-> CopyToVector2(inout DestType InOutVec, SourceType InSource, inout uint InOutStartIndex)
+> CopyToVector(inout DestType InOutVec, SourceType InSource, inout uint InOutStartIndex)
 {
     InOutVec[InOutStartIndex] = InSource;
     ++InOutStartIndex;
@@ -109,7 +79,18 @@ template<typename DestType, typename SourceType, typename... OtherSourceTypes>
 void Cat(inout DestType InOutVec, uint InStartIndex, SourceType InSource, OtherSourceTypes... InOtherSources)
 {
     CopyToVector(InOutVec, InSource, InStartIndex);
-    Cat(InOutVec, InStartIndex + ttl::fundamental_type_traits<SourceType>::dim0, InOtherSources...);
+    Cat(InOutVec, InStartIndex, InOtherSources...);
+}
+
+template<typename FirstType, typename... OtherTypes>
+ttl::enable_if_t<
+    all_same_fundamental_base_type_v<FirstType, OtherTypes...>,
+    vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>
+> vec(FirstType InFirst, OtherTypes... InOthers)
+{
+    auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>)0;
+    Cat(ret, 0, InFirst, InOthers...);
+    return ret;
 }
 
 template<typename FirstType, typename... OtherTypes>
@@ -132,8 +113,8 @@ auto vec3(FirstType InFirst, OtherTypes... InOthers)
     auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, totalScalars>)0;
     
     uint startIndex = 0;
-    CopyToVector2(ret, InFirst, startIndex);
-    (CopyToVector2(ret, InOthers, startIndex), ...);
+    CopyToVector(ret, InFirst, startIndex);
+    (CopyToVector(ret, InOthers, startIndex), ...);
 
     return ret;
 }
@@ -147,6 +128,12 @@ void VectorInit()
     ASSERT(AreEqual, value.y, 2u);
     ASSERT(AreEqual, value.z, 3u);
 
-    float3 a = vec3(1.0, 2.0, 3.0);
+    float3 a = vec(1.0, 2.0, 3.0);
     ASSERT(AreEqual, a, float3(1.0, 2.0, 3.0));
+
+    float3 b = vec2(1.0, 2.0, 3.0);
+    ASSERT(AreEqual, b, float3(1.0, 2.0, 3.0));
+
+    float3 c = vec3(1.0, 2.0, 3.0);
+    ASSERT(AreEqual, c, float3(1.0, 2.0, 3.0));
 }
