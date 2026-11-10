@@ -53,8 +53,8 @@ ttl::enable_if_t<
     (ttl::fundamental_type_traits<SourceType>::dim0 >  1)
 > CopyToVector(inout DestType InOutVec, SourceType InSource, inout uint InOutStartIndex)
 {
-    const uint numIndices = ttl::fundamental_type_traits<SourceType>::dim0;
-    for (uint i = 0; i < ttl::fundamental_type_traits<SourceType>::dim0; ++i)
+    static const uint numIndices = ttl::fundamental_type_traits<SourceType>::dim0;
+    for (uint i = 0; i < numIndices; ++i)
     {
         InOutVec[InOutStartIndex + i] = InSource[i];
     }
@@ -90,7 +90,6 @@ namespace v1
     {
         static_assert(all_same_fundamental_base_type_v<FirstType, OtherTypes...>, "All types must have the same fundamental base type");
         static const uint totalScalars = total_fundamental_scalars_v<FirstType, OtherTypes...>;
-        static_assert(totalScalars <= 4, "The total number of scalars must be less than or equal to 4");
 
         auto ret = (vector<typename ttl::fundamental_type_traits<FirstType>::base_type, totalScalars>)0;
         Cat(ret, 0, InFirst, InOthers...);
@@ -102,7 +101,7 @@ namespace v2
 {
     template<typename FirstType, typename... OtherTypes>
     ttl::enable_if_t<
-        all_same_fundamental_base_type_v<FirstType, OtherTypes...>,
+        (all_same_fundamental_base_type_v<FirstType, OtherTypes...>),
         vector<typename ttl::fundamental_type_traits<FirstType>::base_type, total_fundamental_scalars_v<FirstType, OtherTypes...>>
     > vec(FirstType InFirst, OtherTypes... InOthers)
     {
@@ -158,9 +157,12 @@ static_assert(ttl::models<CVectorInitableV3, float3, float, float, float>::value
 
 //This is a compiler error
 //static_assert(!ttl::models<CVectorInitableV1, float3, float, int, float>::value);
-
 static_assert(!ttl::models<CVectorInitableV2, float3, float, int, float>::value);
 static_assert(!ttl::models<CVectorInitableV3, float3, float, int, float>::value);
+
+//static_assert(!ttl::models<CVectorInitableV1, float3, float, float2, float3>::value);
+static_assert(!ttl::models<CVectorInitableV2, float3, float, float2, float3>::value);
+static_assert(!ttl::models<CVectorInitableV3, float3, float, float2, float3>::value);
 
 
 [numthreads(1, 1, 1)]
@@ -179,4 +181,10 @@ void VectorInit()
 
     float3 c = v3::vec(1.0, 2.0, 3.0);
     ASSERT(AreEqual, c, float3(1.0, 2.0, 3.0));
+
+    ASSERT(AreEqual, v1::vec(1.0, 2.0, 3.0), float3(1.0, 2.0, 3.0));
+    ASSERT(AreEqual, v1::vec(1, 2, 3), int3(1, 2, 3));
+    ASSERT(AreEqual, v1::vec(1, int2(2, 3)), int3(1, int2(2, 3)));
+
+    //float3 d = v2::vec(1.0, 2, false);
 }
