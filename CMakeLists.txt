@@ -63,15 +63,16 @@ add_dependencies(ShaderTestFramework source-dxc)
 add_executable(variadic-vector-init-tests
     test/ShaderTests.cpp
     shader/VectorInit.hlsl
+    shader/VectorInit.hlsli
 )
-set_source_files_properties(shader/VectorInit.hlsl PROPERTIES HEADER_FILE_ONLY TRUE)
+set_source_files_properties(shader/VectorInit.hlsl shader/VectorInit.hlsli PROPERTIES HEADER_FILE_ONLY TRUE)
 target_compile_options(variadic-vector-init-tests PRIVATE /W4 /permissive-)
 set_target_properties(variadic-vector-init-tests PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:variadic-vector-init-tests>"
 )
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES
-    test/ShaderTests.cpp shader/VectorInit.hlsl
+    test/ShaderTests.cpp shader/VectorInit.hlsl shader/VectorInit.hlsli
 )
 
 include(AssetDependencyManagement)
